@@ -1,0 +1,13 @@
+# 公式のPostgresイメージを使用
+FROM postgres:14.9
+
+# 環境変数の設定
+ENV POSTGRES_DB postgres
+ENV POSTGRES_USER postgres
+ENV POSTGRES_PASSWORD pass001
+
+# 初期化スクリプトのコピー (オプション)
+# COPY init.sql /docker-entrypoint-initdb.d/
+
+# ポート5432を公開
+EXPOSE 5432
