@@ -13,17 +13,4 @@ RUN go mod download
 COPY . .
 
 # アプリケーションをビルド
-RUN CGO_ENABLED=0 GOOS=linux go build -o /myapi ./cmd/myapi
-
-# 実行用の軽量なベースイメージを使用
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-
-# ビルダーステージからビルドしたバイナリをコピー
-COPY --from=builder /myapi /myapi
-
-# ポートを公開
-EXPOSE 8080
-
-# アプリケーションを実行
-CMD ["/myapi"]
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app1-be ./cmd/myapi
