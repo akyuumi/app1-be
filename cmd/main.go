@@ -1,80 +1,77 @@
 package main
 
 import (
-	"database/sql"
+    "database/sql"
+    "log"
+    "net/http"
 	"fmt"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"github.com/gin-contrib/cors"
+	
+    "github.com/gin-gonic/gin"
+    _ "github.com/lib/pq"
 )
 
-const (
-	dbHost     = "localhost"
-	dbPort     = 15432
-	dbUser     = "postgres"
-	dbPassword = "pass001"
-	dbName     = "postgres"
-)
-
-var db *sql.DB
-
-func main() {
-	// PostgreSQLデータベースに接続
-	dbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
-	var err error
-	db, err = sql.Open("postgres", dbInfo)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	r := gin.Default()
-
-	// ルーティングの設定
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-
-	r.POST("/login", handleLogin)
-
-	r.Run(":8080")
+type User struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
 }
 
-func handleLogin(c *gin.Context) {
-	var request struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
+func main() {
+    router := gin.Default()
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "JSONデータの解析に失敗しました"})
-		return
-	}
+	// CORS for http://localhost:3000 を許可する
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	router.Use(cors.New(config))
 
-	username := request.Username
-	password := request.Password
+    // PostgreSQL への接続情報を設定
+    const (
+        host     = "localhost"
+        port     = 15432
+        user     = "yourusername"
+        password = "yourpassword"
+        dbname   = "yourdbname"
+    )
+    psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+        "password=%s dbname=%s sslmode=disable",
+        host, port, user, password, dbname)
 
-	// ユーザー情報をデータベースから取得
-	storedPassword := "0000"
-	err := db.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&storedPassword)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusUnauthorized, gin.H{"message": "ユーザーが存在しません"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "エラーが発生しました"})
-		}
-		return
-	}
+    db, err := sql.Open("postgres", psqlInfo)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
 
-	// パスワードを検証
-	// err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
-	if password != storedPassword {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "パスワードが正しくありません"})
-		return
-	}
+	// GETリクエストをハンドルするエンドポイント
+	router.GET("/api/hello", func(c *gin.Context) {
+		c.String(200, "Hello World")
+	})
+	
+    // /api/sendUserInfo でリクエストを受け取るエンドポイント
+    router.POST("/api/sendUserInfo", func(c *gin.Context) {
+        var newUser User
 
-	c.JSON(http.StatusOK, gin.H{"message": "ログイン成功"})
+        // リクエストボディからユーザー情報を取得
+        if err := c.BindJSON(&newUser); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+
+        // データベースに新しいユーザーを登録
+        sqlStatement := `
+        INSERT INTO users (name, email)
+        VALUES ($1, $2)
+        RETURNING id`
+        id := 0
+        err = db.QueryRow(sqlStatement, newUser.Name, newUser.Email).Scan(&id)
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+            return
+        }
+
+        // 成功レスポンスを送信
+        c.JSON(http.StatusOK, gin.H{"status": "user created", "id": id})
+    })
+
+    router.Run(":8080")
 }
