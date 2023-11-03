@@ -16,10 +16,10 @@ RUN go mod download
 COPY . .
 
 # air のインストール
-RUN go get -u github.com/cosmtrek/air
+RUN go install github.com/cosmtrek/air@latest
 
-# ホストマシンのソースコードディレクトリをコンテナのワーキングディレクトリにマウントする
-# Docker コマンドで実行する際に指定します。
+# $GOPATH/bin を $PATH に追加する
+ENV PATH="${PATH}:${GOPATH}/bin"
 
 # アプリケーションの実行（air を使用してホットリロードを有効にする）
 CMD ["air"]
