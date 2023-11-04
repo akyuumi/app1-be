@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -26,14 +27,13 @@ func SetupRoutes(router *gin.Engine) {
 		MaxAge:           12 * time.Hour,
 	}))
 	// PostgreSQL への接続情報を設定
-	const (
-		host     = "localhost"
-		port     = 15432
-		user     = "yourusername"
-		password = "yourpassword"
-		dbname   = "yourdbname"
-	)
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
@@ -45,6 +45,7 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/api/hello", func(c *gin.Context) {
 		c.String(200, "Hello World")
 	})
+
 	// /api/sendUserInfo でリクエストを受け取るエンドポイント
 	router.POST("/api/sendUserInfo", func(c *gin.Context) {
 		var newUser model.User
@@ -55,9 +56,9 @@ func SetupRoutes(router *gin.Engine) {
 		}
 		// データベースに新しいユーザーを登録
 		sqlStatement := `
-     INSERT INTO users (name, email)
-     VALUES ($1, $2)
-     RETURNING id`
+     		INSERT INTO users (name, email)
+     		VALUES ($1, $2)
+     		RETURNING id`
 		id := 0
 		err = db.QueryRow(sqlStatement, newUser.Name, newUser.Email).Scan(&id)
 		if err != nil {
