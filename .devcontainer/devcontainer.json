@@ -1,0 +1,9 @@
+{
+  "name": "app1-be",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": ["golang.go"],
+  "forwardPorts": [8080],
+  "postCreateCommand": "go get -u -v all"
+}
