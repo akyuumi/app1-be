@@ -3,10 +3,7 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
   },
-  // Goプラグイン、Dockerプラグイン
   "extensions": ["golang.go", "ms-azuretools.vscode-docker"],
-  // 8080でポートフォワーディング
   "forwardPorts": [8080],
-  // Goプラグインに必要な機能を全部インストール
   "postCreateCommand": "go install -v golang.org/x/tools/gopls@latest && go install -v github.com/cweill/gotests/...@latest && go install -v github.com/fatih/gomodifytags@latest && go install -v github.com/josharian/impl@latest && go install -v github.com/haya14busa/goplay/cmd/goplay@latest && go install -v github.com/go-delve/delve/cmd/dlv@latest && go install -v honnef.co/go/tools/cmd/staticcheck@latest"
 }
