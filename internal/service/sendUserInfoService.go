@@ -10,10 +10,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func SendUserInfoService(c *gin.Context, psqlInfo string) {
+func SendUserInfoService(c *gin.Context, dbInfo string) {
 
 	// DBオープン
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err := sql.Open("postgres", dbInfo)
 	if err != nil {
 		log.Fatal(err)
 	}
